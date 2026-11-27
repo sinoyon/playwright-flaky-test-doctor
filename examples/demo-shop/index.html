@@ -1,0 +1,59 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Demo Shop</title>
+<style>.hidden{display:none} article{border:1px solid #ccc;padding:8px;margin:4px;display:inline-block}</style></head>
+<body>
+<header><a href="#" id="cartlink" class="hidden">Cart (0)</a></header>
+<main>
+  <section id="login">
+    <h1>Sign in</h1>
+    <form id="loginform">
+      <label for="email">Email</label><input id="email" type="email">
+      <label for="pw">Password</label><input id="pw" type="password">
+      <button type="submit">Sign in</button>
+      <p id="err" role="alert" class="hidden">Invalid email or password</p>
+    </form>
+  </section>
+  <section id="shop" class="hidden">
+    <h1>Shop</h1>
+    <input placeholder="Search products" id="search">
+    <div id="products"><p>Loading products…</p></div>
+  </section>
+  <section id="cart" class="hidden">
+    <h1>Your cart</h1>
+    <ul id="items"></ul>
+    <p id="total"></p>
+    <button id="place">Place order</button>
+  </section>
+  <section id="done" class="hidden"><h1>Thank you for your order</h1><p id="orderno"></p></section>
+</main>
+<script>
+const delay = () => new Promise(r => setTimeout(r, 200 + Math.random() * 700)); // simulate slow API
+const show = id => ['login','shop','cart','done'].forEach(s => document.getElementById(s).classList.toggle('hidden', s !== id));
+const PRODUCTS = [{name:'Blue Mug',price:12},{name:'Red Mug',price:12},{name:'Notebook',price:8}];
+let cart = [];
+document.getElementById('loginform').onsubmit = async e => {
+  e.preventDefault();
+  const ok = document.getElementById('email').value.includes('@') && document.getElementById('pw').value.length >= 6;
+  await delay();
+  if (!ok) { document.getElementById('err').classList.remove('hidden'); return; }
+  show('shop'); document.getElementById('cartlink').classList.remove('hidden');
+  await delay(); render(PRODUCTS);
+};
+function render(list) {
+  const box = document.getElementById('products'); box.innerHTML = '';
+  list.forEach(p => {
+    const a = document.createElement('article');
+    a.innerHTML = `<h2>${p.name}</h2><p>RM ${p.price}</p><button>Add to cart</button>`;
+    a.querySelector('button').onclick = async () => { await delay(); cart.push(p); document.getElementById('cartlink').textContent = `Cart (${cart.length})`; };
+    box.appendChild(a);
+  });
+}
+document.getElementById('search').oninput = async e => { const q = e.target.value.toLowerCase(); await delay(); render(PRODUCTS.filter(p => p.name.toLowerCase().includes(q))); };
+document.getElementById('cartlink').onclick = e => {
+  e.preventDefault(); show('cart');
+  document.getElementById('items').innerHTML = cart.map(p => `<li>${p.name} — RM ${p.price}</li>`).join('');
+  document.getElementById('total').textContent = `Total: RM ${cart.reduce((s,p)=>s+p.price,0)}`;
+};
+document.getElementById('place').onclick = async () => { await delay(); await delay(); history.pushState({}, '', '/orders/' + (1000 + Math.floor(Math.random()*9000))); show('done'); };
+</script>
+</body></html>
